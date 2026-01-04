@@ -8,10 +8,10 @@ use egui_plot::{
 use rayon::iter::{
     IndexedParallelIterator, IntoParallelRefIterator, IntoParallelRefMutIterator, ParallelIterator,
 };
-use splinter::{
+use splinter::bezier::{
     bezier_degree_decrease_f32, bezier_degree_increase_f32, bezier_eval_f32, bezier_split_f32,
     cubic::{CubicBezier2D, num_quadratics},
-    cubic_degree_decrease_f32, cubic_degree_decrease_f64, cubic_split_f32,
+    cubic_degree_decrease_f32, cubic_split_f32,
     quadratic::QuadraticBezier2D,
 };
 
@@ -100,29 +100,33 @@ fn main() {
                         (y_max - y_min) / (res.1 as f64),
                     );
 
-                    let subdivided = points.par_iter().flat_map(|i| {
-                        if i.len() == 3 {
-                            QuadraticBezier2D::try_from(i.as_slice())
-                                .into_iter()
-                                .collect::<Vec<_>>()
-                        } else if i.len() == 4 {
-                            let mut cb = CubicBezier2D::try_from(i.as_slice()).unwrap();
-                            let num = num_quadratics(cb, 1e-2);
+                    let subdivided = points
+                        .par_iter()
+                        .flat_map(|i| {
+                            if i.len() == 3 {
+                                QuadraticBezier2D::try_from(i.as_slice())
+                                    .into_iter()
+                                    .collect::<Vec<_>>()
+                            } else if i.len() == 4 {
+                                let mut cb = CubicBezier2D::try_from(i.as_slice()).unwrap();
+                                let num = num_quadratics(cb, 1e-2);
 
-                            let mut bz = vec![];
-                            for i in 0..num {
-                                let [left, right] = cubic_split_f32(1. / (num - i + 1) as f32, cb);
-                                bz.push(cubic_degree_decrease_f32(left));
-                                cb = right;
+                                let mut bz = vec![];
+                                for i in 0..num {
+                                    let [left, right] =
+                                        cubic_split_f32(1. / (num - i + 1) as f32, cb);
+                                    bz.push(cubic_degree_decrease_f32(left));
+                                    cb = right;
+                                }
+
+                                bz.push(cubic_degree_decrease_f32(cb));
+
+                                bz
+                            } else {
+                                vec![]
                             }
-
-                            bz.push(cubic_degree_decrease_f32(cb));
-
-                            bz
-                        } else {
-                            vec![]
-                        }
-                    }).collect::<Vec<_>>();
+                        })
+                        .collect::<Vec<_>>();
 
                     grid.par_iter_mut().enumerate().for_each(|(idx, p)| {
                         let [i, j] = [idx % res.0, idx / res.0];
@@ -138,7 +142,8 @@ fn main() {
                             .map(|i| i.sdf(glam::vec2(x, y)))
                             .min_by(f32::total_cmp)
                         {
-                            *p = ((30. * dist).sin().powi(2) * 0.1 * 255.) as u8;
+                            *p = ((30. / (x_max - x_min) as f32 * dist).sin().powi(2) * 0.1 * 255.)
+                                as u8;
                         }
                     });
 
@@ -314,8 +319,6 @@ fn main() {
                     }
                 }
             });
-
-            ctx.request_repaint();
         },
     )
     .unwrap();

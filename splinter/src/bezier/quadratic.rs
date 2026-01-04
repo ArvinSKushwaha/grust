@@ -1,4 +1,4 @@
-use crate::{
+use crate::bezier::{
     BezierKnownF32, BezierKnownF64, Lerpable,
     cubic::{CubicBezierF32, CubicBezierF64},
     lerp_f64,

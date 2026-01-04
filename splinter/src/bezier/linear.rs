@@ -1,4 +1,4 @@
-use crate::{BezierKnownF32, BezierKnownF64, Lerpable};
+use crate::bezier::{BezierKnownF32, BezierKnownF64, Lerpable};
 
 pub fn lerp_f32<T: Lerpable<T, f32>>(t: f32, nodes: LinearBezierF32<T>) -> T {
     let nodes = nodes.0;
