@@ -77,7 +77,7 @@ pub fn bezier_eval_f64<T: Lerpable<T, f64>>(t: f64, nodes: &[T]) -> T {
 
 pub fn bezier_split_f32<T: Lerpable<T, f32>>(t: f32, nodes: &[T]) -> [Vec<T>; 2] {
     let n = nodes.len() - 1;
-    if t <= 0. || t >= 1. {
+    if !(0. ..=1.).contains(&t) {
         panic!("Poorly defined");
     }
 
@@ -409,6 +409,18 @@ impl<T: Lerpable<T, f64>> From<BezierF64<T>> for Vec<T> {
 
 impl<T: Lerpable<T, f32>> From<BezierF32<T>> for Vec<T> {
     fn from(value: BezierF32<T>) -> Self {
+        value.0
+    }
+}
+
+impl<T: Lerpable<T, f32>, const N: usize> From<BezierKnownF32<T, N>> for [T; N] {
+    fn from(value: BezierKnownF32<T, N>) -> Self {
+        value.0
+    }
+}
+
+impl<T: Lerpable<T, f64>, const N: usize> From<BezierKnownF64<T, N>> for [T; N] {
+    fn from(value: BezierKnownF64<T, N>) -> Self {
         value.0
     }
 }
