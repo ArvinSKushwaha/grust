@@ -1,0 +1,15 @@
+[package]
+name = "splinter"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+
+[dependencies]
+glam = { workspace = true }
+nalgebra = "0.34.1"
+paste = { workspace = true }
+
+[dev-dependencies]
+eframe = { workspace = true }
+egui_plot = { workspace = true }
